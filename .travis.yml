@@ -7,4 +7,4 @@ jdk:
   - openjdk11
 
 script:
-  - ./gradlew lintKotlin build --warning-mode=all --scan -s
+  - ./gradlew lintKotlin build --warning-mode=all
