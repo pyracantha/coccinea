@@ -1,0 +1,10 @@
+language: java
+
+install:
+  - ./gradlew --version
+
+jdk:
+  - openjdk11
+
+script:
+  - ./gradlew lintKotlin build --warning-mode=all --scan -s
