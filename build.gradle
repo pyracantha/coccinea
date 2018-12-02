@@ -1,6 +1,16 @@
 plugins {
+    id 'maven-publish'
+    id 'signing'
     id 'org.jetbrains.kotlin.jvm' version '1.3.10'
     id 'org.jmailen.kotlinter' version '1.20.1'
+    id 'org.jetbrains.dokka' version '0.9.17'
+}
+
+ext {
+    releaseVersion = '0.0.1'
+    buildVersion = project.hasProperty('buildVersion') ? project.property('buildVersion') : 'development'
+    publishUser = project.hasProperty('publishUser') ? project.property('publishUser') : ''
+    publishPassword = project.hasProperty('publishPassword') ? project.property('publishPassword') : ''
 }
 
 repositories {
@@ -26,4 +36,65 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = '1.6'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+task dokkaJar(type: Jar) {
+    from(tasks.dokka)
+    classifier = 'javadoc'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.github.pyracantha'
+            artifactId = 'coccinea-core'
+            version = "$releaseVersion-$buildVersion"
+
+            from components.java
+            artifact sourcesJar
+            artifact dokkaJar
+
+            pom {
+                name = 'Coccinea'
+                description = 'Coccinea Database'
+                url = 'https://github.com/pyracantha/coccinea'
+                licenses {
+                    license {
+                        name = 'The MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'code2358'
+                        name = 'code2358'
+                        email = 'code2358@outlook.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/pyracantha/coccinea.git'
+                    developerConnection = 'scm:git:git://github.com/pyracantha/coccinea.git'
+                    url = 'https://github.com/pyracantha/coccinea'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            credentials {
+                username = publishUser
+                password = publishPassword
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.maven
 }
