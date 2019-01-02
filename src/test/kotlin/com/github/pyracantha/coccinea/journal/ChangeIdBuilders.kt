@@ -1,9 +1,9 @@
 package com.github.pyracantha.coccinea.journal
 
-import java.util.UUID.randomUUID
-
 fun changeId(
-    value: String = "change id ${randomUUID()}"
+    documentId: DocumentId = documentId(),
+    version: Version = version()
 ) = ChangeId(
-    value = value
+    documentId = documentId,
+    version = version
 )

@@ -28,5 +28,5 @@ data class Change(
     val action: Action,
     val sequence: Sequence
 ) {
-    val changeId: ChangeId = ChangeId("${documentId.value}_${version.value}")
+    val changeId: ChangeId = ChangeId(documentId, version)
 }

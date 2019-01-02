@@ -22,23 +22,44 @@
 
 package com.github.pyracantha.coccinea.journal
 
-data class ChangeId(
-    val documentId: DocumentId,
-    val version: Version
-) {
-    companion object {
-        private const val SEPARATOR = "_"
-        private val regex = """[^$SEPARATOR]+$SEPARATOR[^$SEPARATOR]+""".toRegex()
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
-        fun parse(input: String): ChangeId {
-            if (regex.matches(input)) {
-                val pair = input.split(SEPARATOR)
-                return ChangeId(DocumentId(pair[0]), Version.parse(pair[1]))
-            } else {
-                throw IllegalArgumentException("Unsupported change id format '$input'")
-            }
-        }
+internal class ChangeIdTest {
+
+    @Test
+    fun changeIdValue() {
+        val documentId = documentId()
+        val version = version()
+
+        val changeId = ChangeId(documentId, version)
+
+        assertThat(changeId.value)
+            .isEqualTo("${documentId.value}_${version.value}")
     }
 
-    val value = "${documentId.value}$SEPARATOR${version.value}"
+    @Test
+    fun parsesValidChangeIdValue() {
+        val sequence = 1L
+        val timestamp = 2L
+        val documentIdString = "some-+some"
+        val input = "${documentIdString}_$sequence+$timestamp"
+        val documentId = documentId(documentIdString)
+        val version = version(sequence, timestamp)
+
+        val changeId = ChangeId.parse(input)
+
+        assertThat(changeId.documentId)
+            .isEqualTo(documentId)
+        assertThat(changeId.version)
+            .isEqualTo(version)
+    }
+
+    @Test
+    fun rejectsInvalidChangeId() {
+        val input = "abcd-2"
+
+        assertThrows<IllegalArgumentException> { ChangeId.parse(input) }
+    }
 }
