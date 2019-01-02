@@ -44,6 +44,7 @@ internal class DatabaseImplTest {
     private lateinit var replicator: Replicator
 
     private lateinit var database: Database
+    private lateinit var replicableDatabase: ReplicableDatabase
 
     @BeforeEach
     fun setUp() {
@@ -64,6 +65,8 @@ internal class DatabaseImplTest {
                 bucketDocumentIdFactory,
                 replicator
         )
+
+        replicableDatabase = database as ReplicableDatabase
     }
 
     @Test
@@ -248,12 +251,9 @@ internal class DatabaseImplTest {
     fun delegatesReplicate() {
         val event = replicationEvent()
         val replicableDatabaseInstance: ReplicableDatabase = mock()
-        val destinationDatabase: Database = mock {
-            on { replicableDatabase } doReturn replicableDatabaseInstance
-        }
         whenever(replicator.replicate(any(), eq(replicableDatabaseInstance))).doReturn(Observable.just(event))
 
-        val observer = database.replicate(destinationDatabase).test().await()
+        val observer = database.replicate(replicableDatabaseInstance).test().await()
         observer.await()
 
         observer.assertResult(event)
@@ -262,7 +262,7 @@ internal class DatabaseImplTest {
 
     @Test
     fun replicableDatabaseDelegatesDatabaseId() {
-        val databaseId = database.replicableDatabase.databaseId().blockingGet()
+        val databaseId = replicableDatabase.databaseId().blockingGet()
 
         assertThat(databaseId)
                 .isEqualTo(database.databaseId)
@@ -275,7 +275,7 @@ internal class DatabaseImplTest {
         val exists = true
         whenever(journal.exists(documentId, version)).doReturn(Single.just(exists))
 
-        val observer = database.replicableDatabase.exists(documentId, version).test()
+        val observer = replicableDatabase.exists(documentId, version).test()
         observer.await()
 
         observer.assertResult(exists)
@@ -291,7 +291,7 @@ internal class DatabaseImplTest {
         whenever(bucketDocumentIdFactory.create(documentId, version)).doReturn(Single.just(bucketDocumentId))
         whenever(bucket.get(bucketDocumentId)).doReturn(Maybe.just(document))
 
-        val observer = database.replicableDatabase.get(documentId, version).test()
+        val observer = replicableDatabase.get(documentId, version).test()
         observer.await()
 
         observer.assertResult(document)
@@ -305,7 +305,7 @@ internal class DatabaseImplTest {
         whenever(bucketDocumentIdFactory.create(documentId, version)).doReturn(Single.just(bucketDocumentId))
         whenever(bucket.get(bucketDocumentId)).doReturn(Maybe.empty())
 
-        val observer = database.replicableDatabase.get(documentId, version).test()
+        val observer = replicableDatabase.get(documentId, version).test()
         observer.await()
 
         observer.assertResult()
@@ -322,7 +322,7 @@ internal class DatabaseImplTest {
         whenever(bucket.put(bucketDocumentId, document)).doReturn(Completable.complete())
         whenever(journal.insert(documentId, version, SAVE)).doReturn(Single.just(changeId()))
 
-        val observer = database.replicableDatabase.put(documentId, version, SAVE, document).test()
+        val observer = replicableDatabase.put(documentId, version, SAVE, document).test()
         observer.await()
 
         observer.assertResult()
@@ -337,7 +337,7 @@ internal class DatabaseImplTest {
         val document = document()
         whenever(journal.exists(documentId, version)).doReturn(Single.just(true))
 
-        val observer = database.replicableDatabase.put(documentId, version, SAVE, document).test()
+        val observer = replicableDatabase.put(documentId, version, SAVE, document).test()
         observer.await()
 
         observer.assertResult()
@@ -349,7 +349,7 @@ internal class DatabaseImplTest {
         val version = version()
         whenever(journal.exists(documentId, version)).doReturn(Single.just(false))
 
-        val observer = database.replicableDatabase.put(documentId, version, SAVE, null).test()
+        val observer = replicableDatabase.put(documentId, version, SAVE, null).test()
         observer.await()
 
         observer.assertError(java.lang.IllegalStateException::class.java)
@@ -361,7 +361,7 @@ internal class DatabaseImplTest {
         val version = version()
         whenever(journal.exists(documentId, version)).doReturn(Single.just(false))
 
-        val observer = database.replicableDatabase.put(documentId, version, DELETE, document()).test()
+        val observer = replicableDatabase.put(documentId, version, DELETE, document()).test()
         observer.await()
 
         observer.assertError(java.lang.IllegalStateException::class.java)
@@ -374,7 +374,7 @@ internal class DatabaseImplTest {
         whenever(journal.exists(documentId, version)).doReturn(Single.just(false))
         whenever(journal.insert(documentId, version, DELETE)).doReturn(Single.just(changeId()))
 
-        val observer = database.replicableDatabase.put(documentId, version, DELETE).test()
+        val observer = replicableDatabase.put(documentId, version, DELETE).test()
         observer.await()
 
         observer.assertResult()
@@ -392,7 +392,7 @@ internal class DatabaseImplTest {
         whenever(bucketDocumentIdFactory.create(documentId, version)).doReturn(Single.just(bucketDocumentId))
         whenever(bucket.put(bucketDocumentId, document)).doReturn(Completable.error(error))
 
-        val observer = database.replicableDatabase.put(documentId, version, SAVE, document).test()
+        val observer = replicableDatabase.put(documentId, version, SAVE, document).test()
         observer.await()
 
         observer.assertError(error)
@@ -405,7 +405,7 @@ internal class DatabaseImplTest {
         val changeId = changeId()
         whenever(journal.changes(changeId)).doReturn(Observable.empty())
 
-        val observer = database.replicableDatabase.changes(latestSeen = changeId).test()
+        val observer = replicableDatabase.changes(latestSeen = changeId).test()
         observer.await()
 
         observer.assertResult()

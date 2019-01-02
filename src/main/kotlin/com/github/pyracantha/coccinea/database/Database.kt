@@ -33,7 +33,6 @@ import com.github.pyracantha.coccinea.replication.ReplicationEvent
 
 interface Database {
     val databaseId: DatabaseId
-    val replicableDatabase: ReplicableDatabase
 
     fun get(documentId: DocumentId): Maybe<Document>
     fun put(document: Document): Single<DocumentId>
@@ -41,5 +40,5 @@ interface Database {
     fun remove(documentId: DocumentId): Completable
     fun list(): Observable<DocumentId>
 
-    fun replicate(database: Database): Observable<ReplicationEvent>
+    fun replicate(database: ReplicableDatabase): Observable<ReplicationEvent>
 }

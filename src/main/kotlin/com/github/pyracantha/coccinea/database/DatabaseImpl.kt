@@ -51,45 +51,7 @@ class DatabaseImpl constructor(
     private val versionFactory: VersionFactory,
     private val bucketDocumentIdFactory: BucketDocumentIdFactory,
     private val replicator: Replicator
-) : Database {
-
-    override val replicableDatabase = object : ReplicableDatabase {
-
-        override fun databaseId(): Single<DatabaseId> = Single.just(this@DatabaseImpl.databaseId)
-
-        override fun exists(documentId: DocumentId, version: Version): Single<Boolean> =
-            journal.exists(documentId, version)
-
-        override fun get(documentId: DocumentId, version: Version): Maybe<Document> =
-            this@DatabaseImpl.get(documentId, version)
-
-        override fun put(documentId: DocumentId, version: Version, action: Action, document: Document?): Completable =
-            exists(documentId, version)
-                .flatMapCompletable { exists ->
-                    when (exists) {
-                        false -> putToBucketAndJournal(documentId, version, action, document)
-                        true -> Completable.complete()
-                    }
-                }
-
-        override fun changes(latestSeen: ChangeId?): Observable<Change> =
-            journal.changes(latestSeen)
-
-        private fun putToBucketAndJournal(documentId: DocumentId, version: Version, action: Action, document: Document?): Completable =
-            when {
-                action == SAVE && document != null ->
-                    bucketDocumentIdFactory.create(documentId, version)
-                        .flatMapMaybe {
-                            bucket.put(it, document)
-                                .andThen(Maybe.just(Unit))
-                        }
-                action == DELETE && document == null -> Maybe.just(Unit)
-                else -> Maybe.error(IllegalStateException("Invalid combination: action '$action' and document '$document'"))
-            }.flatMapCompletable {
-                journal.insert(documentId, version, action)
-                    .ignoreElement()
-            }
-    }
+) : Database, ReplicableDatabase {
 
     override fun get(documentId: DocumentId): Maybe<Document> =
         journal.latestChangeOf(documentId)
@@ -147,10 +109,42 @@ class DatabaseImpl constructor(
     override fun list(): Observable<DocumentId> =
         journal.list()
 
-    override fun replicate(database: Database): Observable<ReplicationEvent> =
-        replicator.replicate(this.replicableDatabase, database.replicableDatabase)
+    override fun replicate(database: ReplicableDatabase): Observable<ReplicationEvent> =
+        replicator.replicate(this, database)
 
-    private fun get(documentId: DocumentId, version: Version): Maybe<Document> =
+    override fun databaseId(): Single<DatabaseId> = Single.just(databaseId)
+
+    override fun exists(documentId: DocumentId, version: Version): Single<Boolean> =
+        journal.exists(documentId, version)
+
+    override fun get(documentId: DocumentId, version: Version): Maybe<Document> =
         bucketDocumentIdFactory.create(documentId, version)
             .flatMapMaybe { bucket.get(it) }
+
+    override fun put(documentId: DocumentId, version: Version, action: Action, document: Document?): Completable =
+        exists(documentId, version)
+            .flatMapCompletable { exists ->
+                when (exists) {
+                    false -> putToBucketAndJournal(documentId, version, action, document)
+                    true -> Completable.complete()
+                }
+            }
+
+    override fun changes(latestSeen: ChangeId?): Observable<Change> =
+        journal.changes(latestSeen)
+
+    private fun putToBucketAndJournal(documentId: DocumentId, version: Version, action: Action, document: Document?): Completable =
+        when {
+            action == SAVE && document != null ->
+                bucketDocumentIdFactory.create(documentId, version)
+                    .flatMapMaybe {
+                        bucket.put(it, document)
+                            .andThen(Maybe.just(Unit))
+                    }
+            action == DELETE && document == null -> Maybe.just(Unit)
+            else -> Maybe.error(IllegalStateException("Invalid combination: action '$action' and document '$document'"))
+        }.flatMapCompletable {
+            journal.insert(documentId, version, action)
+                .ignoreElement()
+        }
 }

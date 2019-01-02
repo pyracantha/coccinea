@@ -3,6 +3,7 @@ package com.github.pyracantha.coccinea.scenario
 import com.github.pyracantha.coccinea.bucket.document
 import com.github.pyracantha.coccinea.InMemoryDatabaseFactory
 import com.github.pyracantha.coccinea.database.Database
+import com.github.pyracantha.coccinea.replication.ReplicableDatabase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,11 +13,15 @@ class ReplicationScenariosTest {
 
     private lateinit var source: Database
     private lateinit var destination: Database
+    private lateinit var replicableSource: ReplicableDatabase
+    private lateinit var replicableDestination: ReplicableDatabase
 
     @BeforeEach
     fun setUp() {
         source = InMemoryDatabaseFactory.create()
         destination = InMemoryDatabaseFactory.create()
+        replicableSource = source as ReplicableDatabase
+        replicableDestination = destination as ReplicableDatabase
     }
 
     @Test
@@ -31,7 +36,7 @@ class ReplicationScenariosTest {
         val destinationDocumentId1 = destination.put(destinationDocument1).blockingGet()
         val destinationDocumentId2 = destination.put(destinationDocument2).blockingGet()
 
-        val observer = source.replicate(destination).test()
+        val observer = source.replicate(replicableDestination).test()
         observer.await()
 
         observer.assertResult(
@@ -62,7 +67,7 @@ class ReplicationScenariosTest {
         val destinationDocumentId1 = destination.put(destinationDocument1).blockingGet()
         val destinationDocumentId2 = destination.put(destinationDocument2).blockingGet()
 
-        val observer = destination.replicate(source).test()
+        val observer = destination.replicate(replicableSource).test()
         observer.await()
 
         observer.assertResult(
@@ -88,11 +93,11 @@ class ReplicationScenariosTest {
         val updatedDocumentSource = document()
         val updatedDocumentDestination = document()
         val documentId = source.put(originalDocument).blockingGet()
-        source.replicate(destination).test().await()
+        source.replicate(replicableDestination).test().await()
 
         source.put(documentId, updatedDocumentSource).blockingAwait()
         destination.put(documentId, updatedDocumentDestination).blockingAwait()
-        val observer = source.replicate(destination).test()
+        val observer = source.replicate(replicableDestination).test()
         observer.await()
 
         observer.assertResult(replicationEvent(documentId = documentId))
@@ -109,12 +114,12 @@ class ReplicationScenariosTest {
         val updatedDocumentSource = document()
         val updatedDocumentDestination = document()
         val documentId = source.put(originalDocument).blockingGet()
-        source.replicate(destination).test().await()
+        source.replicate(replicableDestination).test().await()
 
         source.put(documentId, updatedDocumentSource).blockingAwait()
         source.put(documentId, updatedDocumentSource).blockingAwait()
         destination.put(documentId, updatedDocumentDestination).blockingAwait()
-        val observer = source.replicate(destination).test()
+        val observer = source.replicate(replicableDestination).test()
         observer.await()
 
         observer.assertResult(replicationEvent(documentId = documentId))
