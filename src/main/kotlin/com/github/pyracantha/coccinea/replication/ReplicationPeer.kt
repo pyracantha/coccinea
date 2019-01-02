@@ -34,7 +34,7 @@ import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.Single
 
-interface ReplicableDatabase {
+interface ReplicationPeer {
     fun databaseId(): Single<DatabaseId>
     fun exists(documentId: DocumentId, version: Version): Single<Boolean>
     fun get(documentId: DocumentId, version: Version): Maybe<Document>

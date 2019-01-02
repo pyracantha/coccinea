@@ -28,7 +28,7 @@ import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.Single
 import com.github.pyracantha.coccinea.journal.DocumentId
-import com.github.pyracantha.coccinea.replication.ReplicableDatabase
+import com.github.pyracantha.coccinea.replication.ReplicationPeer
 import com.github.pyracantha.coccinea.replication.ReplicationEvent
 
 interface Database {
@@ -40,5 +40,5 @@ interface Database {
     fun remove(documentId: DocumentId): Completable
     fun list(): Observable<DocumentId>
 
-    fun replicate(database: ReplicableDatabase): Observable<ReplicationEvent>
+    fun replicate(replicationPeer: ReplicationPeer): Observable<ReplicationEvent>
 }

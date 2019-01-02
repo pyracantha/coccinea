@@ -25,5 +25,5 @@ package com.github.pyracantha.coccinea.replication
 import io.reactivex.Observable
 
 interface Replicator {
-    fun replicate(source: ReplicableDatabase, destination: ReplicableDatabase): Observable<ReplicationEvent>
+    fun replicate(source: ReplicationPeer, destination: ReplicationPeer): Observable<ReplicationEvent>
 }

@@ -36,8 +36,8 @@ internal class ReplicatorImplTest {
     }
 
     private lateinit var transferLog: TransferLog
-    private lateinit var source: ReplicableDatabase
-    private lateinit var destination: ReplicableDatabase
+    private lateinit var source: ReplicationPeer
+    private lateinit var destination: ReplicationPeer
 
     private lateinit var replicator: Replicator
 
@@ -208,10 +208,10 @@ internal class ReplicatorImplTest {
         verifyPutTransferLog(transferLog, databaseIdDestination, OUTBOUND, change.changeId)
     }
 
-    private fun verifyExists(database: ReplicableDatabase, change: Change) =
+    private fun verifyExists(database: ReplicationPeer, change: Change) =
         verify(database).exists(change.documentId, change.version)
 
-    private fun verifyPut(database: ReplicableDatabase, change: Change, action: Action, document: Document? = null) =
+    private fun verifyPut(database: ReplicationPeer, change: Change, action: Action, document: Document? = null) =
         verify(database).put(change.documentId, change.version, action, document)
 
     private fun verifyPutTransferLog(transferLog: TransferLog, databaseId: DatabaseId, direction: ReplicationDirection, changeId: ChangeId) =

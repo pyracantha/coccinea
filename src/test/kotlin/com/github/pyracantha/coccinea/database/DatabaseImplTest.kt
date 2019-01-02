@@ -29,7 +29,7 @@ import com.github.pyracantha.coccinea.journal.version
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import com.github.pyracantha.coccinea.replication.ReplicableDatabase
+import com.github.pyracantha.coccinea.replication.ReplicationPeer
 import com.github.pyracantha.coccinea.replication.Replicator
 import com.github.pyracantha.coccinea.replication.replicationEvent
 
@@ -44,7 +44,7 @@ internal class DatabaseImplTest {
     private lateinit var replicator: Replicator
 
     private lateinit var database: Database
-    private lateinit var replicableDatabase: ReplicableDatabase
+    private lateinit var replicationPeer: ReplicationPeer
 
     @BeforeEach
     fun setUp() {
@@ -66,7 +66,7 @@ internal class DatabaseImplTest {
                 replicator
         )
 
-        replicableDatabase = database as ReplicableDatabase
+        replicationPeer = database as ReplicationPeer
     }
 
     @Test
@@ -250,32 +250,32 @@ internal class DatabaseImplTest {
     @Test
     fun delegatesReplicate() {
         val event = replicationEvent()
-        val replicableDatabaseInstance: ReplicableDatabase = mock()
-        whenever(replicator.replicate(any(), eq(replicableDatabaseInstance))).doReturn(Observable.just(event))
+        val replicationPeer: ReplicationPeer = mock()
+        whenever(replicator.replicate(any(), eq(replicationPeer))).doReturn(Observable.just(event))
 
-        val observer = database.replicate(replicableDatabaseInstance).test().await()
+        val observer = database.replicate(replicationPeer).test().await()
         observer.await()
 
         observer.assertResult(event)
-        verify(replicator).replicate(any(), eq(replicableDatabaseInstance))
+        verify(replicator).replicate(any(), eq(replicationPeer))
     }
 
     @Test
-    fun replicableDatabaseDelegatesDatabaseId() {
-        val databaseId = replicableDatabase.databaseId().blockingGet()
+    fun replicationPeerDelegatesDatabaseId() {
+        val databaseId = replicationPeer.databaseId().blockingGet()
 
         assertThat(databaseId)
                 .isEqualTo(database.databaseId)
     }
 
     @Test
-    fun replicableDatabaseDelegatesExists() {
+    fun replicationPeerDelegatesExists() {
         val documentId = documentId()
         val version = version()
         val exists = true
         whenever(journal.exists(documentId, version)).doReturn(Single.just(exists))
 
-        val observer = replicableDatabase.exists(documentId, version).test()
+        val observer = replicationPeer.exists(documentId, version).test()
         observer.await()
 
         observer.assertResult(exists)
@@ -283,7 +283,7 @@ internal class DatabaseImplTest {
     }
 
     @Test
-    fun replicableDatabaseGetsDocument() {
+    fun replicationPeerGetsDocument() {
         val documentId = documentId()
         val version = version()
         val bucketDocumentId = bucketDocumentId()
@@ -291,28 +291,28 @@ internal class DatabaseImplTest {
         whenever(bucketDocumentIdFactory.create(documentId, version)).doReturn(Single.just(bucketDocumentId))
         whenever(bucket.get(bucketDocumentId)).doReturn(Maybe.just(document))
 
-        val observer = replicableDatabase.get(documentId, version).test()
+        val observer = replicationPeer.get(documentId, version).test()
         observer.await()
 
         observer.assertResult(document)
     }
 
     @Test
-    fun replicableDatabaseGetsNoResultForUnknownDocument() {
+    fun replicationPeerGetsNoResultForUnknownDocument() {
         val documentId = documentId()
         val version = version()
         val bucketDocumentId = bucketDocumentId()
         whenever(bucketDocumentIdFactory.create(documentId, version)).doReturn(Single.just(bucketDocumentId))
         whenever(bucket.get(bucketDocumentId)).doReturn(Maybe.empty())
 
-        val observer = replicableDatabase.get(documentId, version).test()
+        val observer = replicationPeer.get(documentId, version).test()
         observer.await()
 
         observer.assertResult()
     }
 
     @Test
-    fun replicableDatabasePutsDocumentSave() {
+    fun replicationPeerPutsDocumentSave() {
         val documentId = documentId()
         val version = version()
         val bucketDocumentId = bucketDocumentId()
@@ -322,7 +322,7 @@ internal class DatabaseImplTest {
         whenever(bucket.put(bucketDocumentId, document)).doReturn(Completable.complete())
         whenever(journal.insert(documentId, version, SAVE)).doReturn(Single.just(changeId()))
 
-        val observer = replicableDatabase.put(documentId, version, SAVE, document).test()
+        val observer = replicationPeer.put(documentId, version, SAVE, document).test()
         observer.await()
 
         observer.assertResult()
@@ -331,50 +331,50 @@ internal class DatabaseImplTest {
     }
 
     @Test
-    fun replicableDatabasePutDocumentIgnoresWhenJournalEntryExists() {
+    fun replicationPeerPutDocumentIgnoresWhenJournalEntryExists() {
         val documentId = documentId()
         val version = version()
         val document = document()
         whenever(journal.exists(documentId, version)).doReturn(Single.just(true))
 
-        val observer = replicableDatabase.put(documentId, version, SAVE, document).test()
+        val observer = replicationPeer.put(documentId, version, SAVE, document).test()
         observer.await()
 
         observer.assertResult()
     }
 
     @Test
-    fun replicableDatabasePutDocumentFailsWhenDocumentIsMissing() {
+    fun replicationPeerPutDocumentFailsWhenDocumentIsMissing() {
         val documentId = documentId()
         val version = version()
         whenever(journal.exists(documentId, version)).doReturn(Single.just(false))
 
-        val observer = replicableDatabase.put(documentId, version, SAVE, null).test()
+        val observer = replicationPeer.put(documentId, version, SAVE, null).test()
         observer.await()
 
         observer.assertError(java.lang.IllegalStateException::class.java)
     }
 
     @Test
-    fun replicableDatabasePutDocumentFailsWhenDocumentIsPresent() {
+    fun replicationPeerPutDocumentFailsWhenDocumentIsPresent() {
         val documentId = documentId()
         val version = version()
         whenever(journal.exists(documentId, version)).doReturn(Single.just(false))
 
-        val observer = replicableDatabase.put(documentId, version, DELETE, document()).test()
+        val observer = replicationPeer.put(documentId, version, DELETE, document()).test()
         observer.await()
 
         observer.assertError(java.lang.IllegalStateException::class.java)
     }
 
     @Test
-    fun replicableDatabasePutsDocumentDelete() {
+    fun replicationPeerPutsDocumentDelete() {
         val documentId = documentId()
         val version = version()
         whenever(journal.exists(documentId, version)).doReturn(Single.just(false))
         whenever(journal.insert(documentId, version, DELETE)).doReturn(Single.just(changeId()))
 
-        val observer = replicableDatabase.put(documentId, version, DELETE).test()
+        val observer = replicationPeer.put(documentId, version, DELETE).test()
         observer.await()
 
         observer.assertResult()
@@ -382,7 +382,7 @@ internal class DatabaseImplTest {
     }
 
     @Test
-    fun replicableDatabasePutDocumentFailsDuringBucketPutPreventsFromJournalModification() {
+    fun replicationPeerPutDocumentFailsDuringBucketPutPreventsFromJournalModification() {
         val documentId = documentId()
         val version = version()
         val bucketDocumentId = bucketDocumentId()
@@ -392,7 +392,7 @@ internal class DatabaseImplTest {
         whenever(bucketDocumentIdFactory.create(documentId, version)).doReturn(Single.just(bucketDocumentId))
         whenever(bucket.put(bucketDocumentId, document)).doReturn(Completable.error(error))
 
-        val observer = replicableDatabase.put(documentId, version, SAVE, document).test()
+        val observer = replicationPeer.put(documentId, version, SAVE, document).test()
         observer.await()
 
         observer.assertError(error)
@@ -401,11 +401,11 @@ internal class DatabaseImplTest {
     }
 
     @Test
-    fun replicableDatabaseDelegatesChanges() {
+    fun replicationPeerDelegatesChanges() {
         val changeId = changeId()
         whenever(journal.changes(changeId)).doReturn(Observable.empty())
 
-        val observer = replicableDatabase.changes(latestSeen = changeId).test()
+        val observer = replicationPeer.changes(latestSeen = changeId).test()
         observer.await()
 
         observer.assertResult()

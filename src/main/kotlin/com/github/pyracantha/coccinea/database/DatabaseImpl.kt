@@ -35,7 +35,7 @@ import com.github.pyracantha.coccinea.journal.DocumentIdFactory
 import com.github.pyracantha.coccinea.journal.Journal
 import com.github.pyracantha.coccinea.journal.Version
 import com.github.pyracantha.coccinea.journal.VersionFactory
-import com.github.pyracantha.coccinea.replication.ReplicableDatabase
+import com.github.pyracantha.coccinea.replication.ReplicationPeer
 import com.github.pyracantha.coccinea.replication.ReplicationEvent
 import com.github.pyracantha.coccinea.replication.Replicator
 import io.reactivex.Completable
@@ -51,7 +51,7 @@ class DatabaseImpl constructor(
     private val versionFactory: VersionFactory,
     private val bucketDocumentIdFactory: BucketDocumentIdFactory,
     private val replicator: Replicator
-) : Database, ReplicableDatabase {
+) : Database, ReplicationPeer {
 
     override fun get(documentId: DocumentId): Maybe<Document> =
         journal.latestChangeOf(documentId)
@@ -109,8 +109,8 @@ class DatabaseImpl constructor(
     override fun list(): Observable<DocumentId> =
         journal.list()
 
-    override fun replicate(database: ReplicableDatabase): Observable<ReplicationEvent> =
-        replicator.replicate(this, database)
+    override fun replicate(replicationPeer: ReplicationPeer): Observable<ReplicationEvent> =
+        replicator.replicate(this, replicationPeer)
 
     override fun databaseId(): Single<DatabaseId> = Single.just(databaseId)
 

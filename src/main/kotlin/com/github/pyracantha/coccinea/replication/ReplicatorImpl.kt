@@ -39,18 +39,18 @@ class ReplicatorImpl constructor(
     private val scheduler: Scheduler
 ) : Replicator {
 
-    override fun replicate(source: ReplicableDatabase, destination: ReplicableDatabase): Observable<ReplicationEvent> =
+    override fun replicate(source: ReplicationPeer, destination: ReplicationPeer): Observable<ReplicationEvent> =
         replicateTo(source, destination, OUTBOUND)
             .ignoreElements()
             .andThen(replicateTo(destination, source, INBOUND))
             .subscribeOn(scheduler)
 
-    private fun replicateTo(source: ReplicableDatabase, destination: ReplicableDatabase, direction: ReplicationDirection): Observable<ReplicationEvent> {
+    private fun replicateTo(source: ReplicationPeer, destination: ReplicationPeer, direction: ReplicationDirection): Observable<ReplicationEvent> {
         return getFromTransferLog(source, destination, direction)
             .flatMapObservable { transferChanges(source, destination, direction, it) }
     }
 
-    private fun transferChanges(source: ReplicableDatabase, destination: ReplicableDatabase, direction: ReplicationDirection, lastTransferredChange: TransferLogResult): Observable<ReplicationEvent> =
+    private fun transferChanges(source: ReplicationPeer, destination: ReplicationPeer, direction: ReplicationDirection, lastTransferredChange: TransferLogResult): Observable<ReplicationEvent> =
         Observable.defer {
             source.changes(lastTransferredChange.changeId)
                 .concatMapMaybe { change ->
@@ -59,7 +59,7 @@ class ReplicatorImpl constructor(
                 }
         }
 
-    private fun transferData(source: ReplicableDatabase, destination: ReplicableDatabase, direction: ReplicationDirection, change: Change): Maybe<ChangeId> =
+    private fun transferData(source: ReplicationPeer, destination: ReplicationPeer, direction: ReplicationDirection, change: Change): Maybe<ChangeId> =
         when (change.action) {
             DELETE -> {
                 destination.put(change.documentId, change.version, change.action)
@@ -85,7 +85,7 @@ class ReplicatorImpl constructor(
             }
         }
 
-    private fun getFromTransferLog(source: ReplicableDatabase, destination: ReplicableDatabase, direction: ReplicationDirection): Single<TransferLogResult> =
+    private fun getFromTransferLog(source: ReplicationPeer, destination: ReplicationPeer, direction: ReplicationDirection): Single<TransferLogResult> =
         when (direction) {
             INBOUND -> source.databaseId()
             OUTBOUND -> destination.databaseId()
@@ -95,7 +95,7 @@ class ReplicatorImpl constructor(
                 .switchIfEmpty(Single.just(TransferLogResult()))
         }
 
-    private fun addToTransferLog(source: ReplicableDatabase, destination: ReplicableDatabase, direction: ReplicationDirection, changeId: ChangeId): Completable =
+    private fun addToTransferLog(source: ReplicationPeer, destination: ReplicationPeer, direction: ReplicationDirection, changeId: ChangeId): Completable =
         when (direction) {
             INBOUND -> source.databaseId()
             OUTBOUND -> destination.databaseId()
