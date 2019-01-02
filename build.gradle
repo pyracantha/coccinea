@@ -7,7 +7,7 @@ plugins {
 }
 
 ext {
-    releaseVersion = '0.0.1'
+    releaseVersion = '0.0.2'
     buildVersion = project.hasProperty('buildVersion') ? project.property('buildVersion') : 'development'
     publishUser = project.hasProperty('publishUser') ? project.property('publishUser') : ''
     publishPassword = project.hasProperty('publishPassword') ? project.property('publishPassword') : ''
