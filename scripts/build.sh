@@ -17,4 +17,4 @@ if [ $# -eq 4 ]; then
     OPTIONS="publish -Psigning.secretKeyRingFile=${signing_secret_key_ring_file} -Psigning.keyId=${signing_key_id} -Psigning.password=${signing_key_password} -PpublishUser=${publish_user} -PpublishPassword=${publish_password}"
 fi
 
-./gradlew lintKotlin build --warning-mode=all -PbuildVersion=$BUILD_VERSION $OPTIONS
+./gradlew clean lintKotlin build --warning-mode=all -PbuildVersion=$BUILD_VERSION $OPTIONS
