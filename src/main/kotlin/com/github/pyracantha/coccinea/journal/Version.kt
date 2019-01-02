@@ -23,8 +23,25 @@
 package com.github.pyracantha.coccinea.journal
 
 data class Version(
-    val value: String
+    val sequence: Long,
+    val timestamp: Long
 ) : Comparable<Version> {
+
+    companion object {
+        private const val SEPARATOR = "+"
+        private val regex = """[0-9]+\$SEPARATOR[0-9]+""".toRegex()
+
+        fun parse(input: String): Version {
+            if (regex.matches(input)) {
+                val pair = input.split(SEPARATOR)
+                return Version(pair[0].toLong(), pair[1].toLong())
+            } else {
+                throw IllegalArgumentException("Unsupported version format '$input'")
+            }
+        }
+    }
+
+    val value = "$sequence$SEPARATOR$timestamp"
 
     override fun compareTo(other: Version): Int =
         this.value.compareTo(other.value)

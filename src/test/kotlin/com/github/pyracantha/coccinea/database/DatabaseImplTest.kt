@@ -154,10 +154,10 @@ internal class DatabaseImplTest {
     @Test
     fun updatesDocument() {
         val documentId = documentId()
-        val version = version("2")
+        val version = version(sequence = 2)
         val bucketDocumentId = bucketDocumentId()
         val document = document()
-        val change = change(version = version("1"))
+        val change = change(version = version(sequence = 1))
         whenever(journal.latestChangeOf(documentId)).doReturn(Maybe.just(change))
         whenever(versionFactory.create(change.version)).doReturn(Single.just(version))
         whenever(bucketDocumentIdFactory.create(documentId, version)).doReturn(Single.just(bucketDocumentId))
@@ -175,11 +175,11 @@ internal class DatabaseImplTest {
     @Test
     fun updateDocumentFailsDuringBucketPutPreventsFromJournalModification() {
         val documentId = documentId()
-        val version = version("2")
+        val version = version(sequence = 2)
         val bucketDocumentId = bucketDocumentId()
         val document = document()
         val error = IllegalStateException()
-        val change = change(version = version("1"))
+        val change = change(version = version(sequence = 1))
         whenever(journal.latestChangeOf(documentId)).doReturn(Maybe.just(change))
         whenever(versionFactory.create(change.version)).doReturn(Single.just(version))
         whenever(bucketDocumentIdFactory.create(documentId, version)).doReturn(Single.just(bucketDocumentId))
@@ -208,8 +208,8 @@ internal class DatabaseImplTest {
     @Test
     fun removesDocument() {
         val documentId = documentId()
-        val version = version("2")
-        val change = change(version = version("1"))
+        val version = version(sequence = 2)
+        val change = change(version = version(sequence = 1))
         whenever(journal.latestChangeOf(documentId)).doReturn(Maybe.just(change))
         whenever(versionFactory.create(change.version)).doReturn(Single.just(version))
         whenever(journal.insert(documentId, version, DELETE)).doReturn(Single.just(changeId()))

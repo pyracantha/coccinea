@@ -59,7 +59,7 @@ internal class InMemoryJournalTest {
     @Test
     fun delegatesList() {
         val documentId = documentId()
-        val change = change(version = version("1"))
+        val change = change(version = version())
         val keys = mock<ConcurrentHashMap.KeySetView<DocumentId, Set<Change>>> {
             on { iterator() } doReturn mutableSetOf(documentId).iterator()
         }
@@ -75,8 +75,8 @@ internal class InMemoryJournalTest {
     @Test
     fun listLatestVersionSave() {
         val documentId = documentId()
-        val changeVersion1 = change(documentId = documentId, version = version("1"), action = DELETE)
-        val changeVersion2 = change(documentId = documentId, version = version("2"), action = SAVE)
+        val changeVersion1 = change(documentId = documentId, version = version(sequence = 1), action = DELETE)
+        val changeVersion2 = change(documentId = documentId, version = version(sequence = 2), action = SAVE)
         val keys = mock<ConcurrentHashMap.KeySetView<DocumentId, Set<Change>>> {
             on { iterator() } doReturn mutableSetOf(documentId).iterator()
         }
@@ -91,8 +91,8 @@ internal class InMemoryJournalTest {
     @Test
     fun listFiltersLatestVersionDelete() {
         val documentId = documentId()
-        val changeVersion1 = change(documentId = documentId, version = version("1"), action = SAVE)
-        val changeVersion2 = change(documentId = documentId, version = version("2"), action = DELETE)
+        val changeVersion1 = change(documentId = documentId, version = version(sequence = 1), action = SAVE)
+        val changeVersion2 = change(documentId = documentId, version = version(sequence = 2), action = DELETE)
         val keys = mock<ConcurrentHashMap.KeySetView<DocumentId, Set<Change>>> {
             on { iterator() } doReturn mutableSetOf(documentId).iterator()
         }
@@ -118,7 +118,7 @@ internal class InMemoryJournalTest {
     @Test
     fun existsVersionExists() {
         val documentId = documentId()
-        val version = version("1")
+        val version = version()
         val change = change(version = version)
         whenever(storage[documentId]).doReturn(setOf(change))
 
@@ -131,7 +131,7 @@ internal class InMemoryJournalTest {
     @Test
     fun existsVersionDoesNotExist() {
         val documentId = documentId()
-        val version = version("1")
+        val version = version()
         val change = change(version = version)
         whenever(storage[documentId]).doReturn(setOf(change))
 
@@ -153,8 +153,8 @@ internal class InMemoryJournalTest {
     @Test
     fun returnsLatestChangeOf() {
         val documentId = documentId()
-        val changeVersion1 = change(documentId = documentId, version = version("1"))
-        val changeVersion2 = change(documentId = documentId, version = version("2"))
+        val changeVersion1 = change(documentId = documentId, version = version(sequence = 1))
+        val changeVersion2 = change(documentId = documentId, version = version(sequence = 2))
         whenever(storage[documentId]).doReturn(setOf(changeVersion1, changeVersion2))
 
         val result = journal.latestChangeOf(documentId).blockingGet()

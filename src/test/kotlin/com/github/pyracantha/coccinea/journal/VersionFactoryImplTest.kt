@@ -9,22 +9,22 @@ import org.junit.jupiter.api.Test
 
 internal class VersionFactoryImplTest {
 
-    private lateinit var randomIdGenerator: () -> Long
+    private lateinit var timestampGenerator: () -> Long
 
     private lateinit var versionFactory: VersionFactory
 
     @BeforeEach
     fun setUp() {
-        randomIdGenerator = mock()
+        timestampGenerator = mock()
 
-        versionFactory = VersionFactoryImpl(randomIdGenerator, trampoline())
+        versionFactory = VersionFactoryImpl(timestampGenerator, trampoline())
     }
 
     @Test
     fun createsInitialVersion() {
-        val randomId = 123L
-        val version = version("1_$randomId")
-        whenever(randomIdGenerator.invoke()).doReturn(randomId)
+        val timestamp = 123L
+        val version = version(sequence = 1, timestamp = timestamp)
+        whenever(timestampGenerator.invoke()).doReturn(timestamp)
 
         val observer = versionFactory.create().test()
         observer.await()
@@ -34,10 +34,10 @@ internal class VersionFactoryImplTest {
 
     @Test
     fun createsNextVersion() {
-        val randomId = 123L
-        val version = version("1_$randomId")
-        val nextVersion = version("2_$randomId")
-        whenever(randomIdGenerator.invoke()).doReturn(randomId)
+        val timestamp = 123L
+        val version = version(sequence = 1)
+        val nextVersion = version(sequence = 2, timestamp = timestamp)
+        whenever(timestampGenerator.invoke()).doReturn(timestamp)
 
         val observer = versionFactory.create(version).test()
         observer.await()

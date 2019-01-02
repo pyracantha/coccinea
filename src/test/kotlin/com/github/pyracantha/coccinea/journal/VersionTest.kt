@@ -22,26 +22,41 @@
 
 package com.github.pyracantha.coccinea.journal
 
-import io.reactivex.Scheduler
-import io.reactivex.Single
+import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
-class VersionFactoryImpl constructor(
-    private val timestampGenerator: () -> Long = { System.nanoTime() },
-    private val scheduler: Scheduler
-) : VersionFactory {
+internal class VersionTest {
 
-    override fun create(): Single<Version> =
-        Single.just(toVersion(1))
-            .observeOn(scheduler)
+    @Test
+    fun version() {
+        val sequence = 1L
+        val timestamp = 2L
 
-    override fun create(version: Version): Single<Version> =
-        Single.just(nextVersion(version))
-            .observeOn(scheduler)
+        val version = Version(sequence, timestamp)
 
-    private fun nextVersion(version: Version): Version {
-        return toVersion(version.sequence.plus(1))
+        Assertions.assertThat(version.value)
+            .isEqualTo("$sequence+$timestamp")
     }
 
-    private fun toVersion(sequence: Long) =
-        Version(sequence, timestampGenerator.invoke())
+    @Test
+    fun parsesValidChangeIdValue() {
+        val sequence = 1L
+        val timestamp = 2L
+        val input = "$sequence+$timestamp"
+
+        val version = Version.parse(input)
+
+        Assertions.assertThat(version.sequence)
+            .isEqualTo(sequence)
+        Assertions.assertThat(version.timestamp)
+            .isEqualTo(timestamp)
+    }
+
+    @Test
+    fun rejectsInvalidChangeId() {
+        val input = "1_2"
+
+        assertThrows<IllegalArgumentException> { Version.parse(input) }
+    }
 }

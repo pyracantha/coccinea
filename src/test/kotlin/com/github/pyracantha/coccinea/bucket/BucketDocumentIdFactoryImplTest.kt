@@ -1,8 +1,8 @@
 package com.github.pyracantha.coccinea.bucket
 
+import com.github.pyracantha.coccinea.journal.documentId
+import com.github.pyracantha.coccinea.journal.version
 import io.reactivex.schedulers.Schedulers
-import com.github.pyracantha.coccinea.journal.DocumentId
-import com.github.pyracantha.coccinea.journal.Version
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -18,13 +18,13 @@ internal class BucketDocumentIdFactoryImplTest {
 
     @Test
     fun test() {
-        val documentId = DocumentId(value = "doc")
-        val version = Version(value = "version")
+        val documentId = documentId()
+        val version = version()
         val expected = bucketDocumentId(value = "${documentId.value}-${version.value}")
 
         val bucketDocumentId = bucketDocumentIdFactory.create(documentId, version).blockingGet()
 
         assertThat(bucketDocumentId)
-                .isEqualTo(expected)
+            .isEqualTo(expected)
     }
 }
