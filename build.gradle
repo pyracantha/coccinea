@@ -33,9 +33,11 @@ test {
 
 compileKotlin {
     kotlinOptions.jvmTarget = '1.6'
+    kotlinOptions.allWarningsAsErrors = true
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
+    kotlinOptions.allWarningsAsErrors = true
 }
 
 task sourcesJar(type: Jar) {
