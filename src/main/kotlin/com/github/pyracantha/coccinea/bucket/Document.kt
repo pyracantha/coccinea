@@ -22,6 +22,8 @@
 
 package com.github.pyracantha.coccinea.bucket
 
+import java.io.Serializable
+
 data class Document(
     val value: String
-)
+) : Serializable

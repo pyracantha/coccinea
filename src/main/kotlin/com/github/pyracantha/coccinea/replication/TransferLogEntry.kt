@@ -23,7 +23,8 @@
 package com.github.pyracantha.coccinea.replication
 
 import com.github.pyracantha.coccinea.journal.ChangeId
+import java.io.Serializable
 
 data class TransferLogEntry(
     val changeId: ChangeId
-)
+) : Serializable

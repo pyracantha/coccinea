@@ -22,9 +22,11 @@
 
 package com.github.pyracantha.coccinea.journal
 
+import java.io.Serializable
+
 data class Sequence(
     val value: Long
-) : Comparable<Sequence> {
+) : Serializable, Comparable<Sequence> {
 
     override fun compareTo(other: Sequence): Int =
         this.value.compareTo(other.value)

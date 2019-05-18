@@ -22,6 +22,8 @@
 
 package com.github.pyracantha.coccinea.journal
 
+import java.io.Serializable
+
 data class DocumentId(
     val value: String
-)
+) : Serializable

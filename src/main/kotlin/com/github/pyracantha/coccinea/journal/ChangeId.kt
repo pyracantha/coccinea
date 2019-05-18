@@ -22,10 +22,12 @@
 
 package com.github.pyracantha.coccinea.journal
 
+import java.io.Serializable
+
 data class ChangeId(
     val documentId: DocumentId,
     val version: Version
-) {
+) : Serializable {
     companion object {
         private const val SEPARATOR = "_"
         private val regex = """[^$SEPARATOR]+$SEPARATOR[^$SEPARATOR]+""".toRegex()

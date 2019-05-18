@@ -24,8 +24,9 @@ package com.github.pyracantha.coccinea.replication
 
 import com.github.pyracantha.coccinea.journal.Action
 import com.github.pyracantha.coccinea.journal.DocumentId
+import java.io.Serializable
 
 data class ReplicationEvent(
     val documentId: DocumentId,
     val action: Action
-)
+) : Serializable

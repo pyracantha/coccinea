@@ -22,10 +22,12 @@
 
 package com.github.pyracantha.coccinea.journal
 
+import java.io.Serializable
+
 data class Version(
     val sequence: Long,
     val timestamp: Long
-) : Comparable<Version> {
+) : Serializable, Comparable<Version> {
 
     companion object {
         private const val SEPARATOR = "+"

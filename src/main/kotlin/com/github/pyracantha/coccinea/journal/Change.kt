@@ -22,11 +22,13 @@
 
 package com.github.pyracantha.coccinea.journal
 
+import java.io.Serializable
+
 data class Change(
     val documentId: DocumentId,
     val version: Version,
     val action: Action,
     val sequence: Sequence
-) {
+) : Serializable {
     val changeId: ChangeId = ChangeId(documentId, version)
 }

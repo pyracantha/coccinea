@@ -22,6 +22,8 @@
 
 package com.github.pyracantha.coccinea.database
 
+import java.io.Serializable
+
 data class DatabaseId(
     val value: String
-)
+) : Serializable
